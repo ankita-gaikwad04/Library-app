@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibSys | Premium AI Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 1. GLOBAL VARIABLES & RESET */
+        :root {
+            --bg-color: #f4f7f9;
+            --sidebar-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --primary: #4f46e5; /* Indigo */
+            --primary-hover: #4338ca;
+            --accent: #f59e0b; /* Warm Amber */
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 2. PREMIUM SIDEBAR */
+        .sidebar { 
+            width: 280px; 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 32px 24px; 
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+        
+        .logo { 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+            color: var(--text-main); 
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--primary); }
+
+        /* Role Toggle */
+        .role-toggle { margin-bottom: 32px; }
+        .role-toggle label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .role-toggle select {
+            width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border);
+            background: #f9fafb; font-family: inherit; font-weight: 600; color: var(--text-main); cursor: pointer;
+            transition: all 0.2s;
+        }
+        .role-toggle select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+        /* Navigation */
+        .nav-group { display: flex; flex-direction: column; gap: 8px; }
+        .nav-btn { 
+            background: transparent; border: none; color: var(--text-muted); padding: 14px 16px; 
+            border-radius: 10px; text-align: left; font-size: 0.95rem; font-weight: 600; 
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+        }
+        .nav-btn:hover { background: #f3f4f6; color: var(--text-main); }
+        .nav-btn.active { background: var(--primary); color: white; box-shadow: var(--shadow-md); }
+
+        /* 3. MAIN CONTENT AREA */
+        .main-content { flex: 1; padding: 48px; overflow-y: auto; position: relative; }
+        .tab { display: none; animation: slideFadeIn 0.4s ease forwards; }
+        .tab.active { display: block; }
+        
+        @keyframes slideFadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .page-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;}
+        .page-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; color: var(--text-main); margin-bottom: 8px;}
+        .page-header p { color: var(--text-muted); font-size: 1rem; font-weight: 500;}
+
+        /* 4. DASHBOARD METRICS */
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 48px; }
+        .metric-card { 
+            background: var(--card-bg); padding: 24px; border-radius: 16px; 
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+            position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .metric-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+        }
+        .metric-card h3 { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .metric-card p { font-size: 2.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; }
+
+        /* 5. FORMS */
+        .form-card { 
+            background: var(--card-bg); padding: 24px; border-radius: 16px; 
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 32px; 
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 100px 140px; gap: 16px; }
+        .form-grid-members { display: grid; grid-template-columns: 1fr 1fr 1fr 140px; gap: 16px; }
+        .form-grid-issue { display: grid; grid-template-columns: 1fr 1fr 140px; gap: 16px; align-items: end; }
+        
+        input, select { 
+            width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; 
+            font-family: inherit; font-size: 0.95rem; font-weight: 500; background: #f9fafb; transition: all 0.2s;
+            color: var(--text-main);
+        }
+        input::placeholder { color: #9ca3af; }
+        input:focus, select:focus { 
+            outline: none; border-color: var(--primary); background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); 
+        }
+        
+        .btn-primary { 
+            background: var(--primary); color: white; border: none; padding: 14px 24px; 
+            border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; 
+            font-size: 0.95rem; box-shadow: var(--shadow-sm); font-family: inherit;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-primary:active { transform: translateY(0); }
+
+        /* 6. CARDS & GRID */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .card { 
+            background: var(--card-bg); padding: 24px; border-radius: 16px; 
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); 
+            display: flex; flex-direction: column; transition: all 0.3s ease; 
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: #d1d5db; }
+        .card h4 { font-size: 1.2rem; color: var(--text-main); margin-bottom: 8px; font-weight: 700; line-height: 1.3;}
+        .card p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;}
+        
+        /* 7. BUTTONS IN CARDS */
+        .card-actions { margin-top: auto; display: flex; gap: 12px; padding-top: 24px; }
+        .btn-sm { 
+            padding: 10px 16px; border-radius: 10px; border: none; font-weight: 700; 
+            cursor: pointer; flex: 1; font-size: 0.85rem; transition: all 0.2s; font-family: inherit;
+        }
+        .btn-edit { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; } 
+        .btn-edit:hover { background: #e5e7eb; }
+        
+        .btn-delete { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; } 
+        .btn-delete:hover { background: #fee2e2; }
+        
+        .btn-issue { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; } 
+        .btn-issue:hover { background: #d1fae5; }
+        
+        /* 8. BADGES */
+        .badge { 
+            display: inline-block; padding: 6px 12px; border-radius: 8px; 
+            font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; margin-top: 16px; width: fit-content;
+        }
+        .badge-available { background: #d1fae5; color: #065f46; }
+        .badge-out { background: #fee2e2; color: #991b1b; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+
+        /* USER PORTAL SPECIFIC */
+        .request-card { border-left: 4px solid var(--accent); }
+        .ai-search-bar { display: flex; gap: 10px; }
+        
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="logo">📚 Lib<span>Sys</span></div>
+        
+        <!-- Role Toggle -->
+        <div class="role-toggle">
+            <label>Portal View</label>
+            <select id="roleToggle" onchange="switchRole(this.value)">
+                <option value="admin">👨‍💼 Admin Dashboard</option>
+                <option value="user">🎓 Student Portal</option>
+            </select>
+        </div>
+
+        <!-- Admin Navigation -->
+        <div id="admin-nav" class="nav-group">
+            <button class="nav-btn active" onclick="switchTab('dashboard', this)">📊 Overview</button>
+            <button class="nav-btn" onclick="switchTab('books', this)">📖 Manage Books</button>
+            <button class="nav-btn" onclick="switchTab('members', this)">👥 Manage Members</button>
+            <button class="nav-btn" onclick="switchTab('issues', this)">🔄 Issue / Return</button>
+            <button class="nav-btn" onclick="switchTab('requests', this)">📥 Book Requests</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+        
+        <!-- TAB 1: DASHBOARD -->
+        <div id="dashboard" class="tab active">
+            <div class="page-header">
+                <div>
+                    <h1>Library Overview</h1>
+                    <p>Real-time metrics for your library system.</p>
+                </div>
+            </div>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>Total Books</h3>
+                    <p id="stat-books">0</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Registered Members</h3>
+                    <p id="stat-members">0</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Active Issues</h3>
+                    <p id="stat-issued">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: BOOKS -->
+        <div id="books" class="tab">
+            <div class="page-header">
+                <div>
+                    <h1>Manage Books</h1>
+                    <p>Add, edit, or remove books from the inventory.</p>
+                </div>
+            </div>
+            <div class="form-card">
+                <form id="bookForm" class="form-grid">
+                    <input type="text" id="bookName" placeholder="Book Title" required>
+                    <input type="text" id="author" placeholder="Author Name" required>
+                    <input type="number" id="quantity" placeholder="Quantity" min="1" required>
+                    <button type="submit" class="btn-primary">Add Book</button>
+                </form>
+            </div>
+            <div id="bookList" class="grid-container"></div>
+        </div>
+
+        <!-- TAB 3: MEMBERS -->
+        <div id="members" class="tab">
+            <div class="page-header">
+                <div>
+                    <h1>Manage Members</h1>
+                    <p>Register and view students who can borrow books.</p>
+                </div>
+            </div>
+            <div class="form-card">
+                <form id="memberForm" class="form-grid-members">
+                    <input type="text" id="memberName" placeholder="Full Name" required>
+                    <input type="email" id="memberEmail" placeholder="Email Address" required>
+                    <input type="text" id="memberPhone" placeholder="Phone Number" required>
+                    <button type="submit" class="btn-primary">Register</button>
+                </form>
+            </div>
+            <div id="memberList" class="grid-container"></div>
+        </div>
+
+        <!-- TAB 4: ISSUE / RETURN -->
+        <div id="issues" class="tab">
+            <div class="page-header">
+                <div>
+                    <h1>Issue & Return</h1>
+                    <p>Manually issue books to members or process returns.</p>
+                </div>
+            </div>
+            <div class="form-card">
+                <form id="issueForm" class="form-grid-issue">
+                    <select id="issueBookSelect" required>
+                        <option value="">Select Book...</option>
+                    </select>
+                    <select id="issueMemberSelect" required>
+                        <option value="">Select Member...</option>
+                    </select>
+                    <button type="submit" class="btn-primary">Issue Book</button>
+                </form>
+            </div>
+            <div id="activeIssuesList" class="grid-container" style="margin-top: 32px;"></div>
+        </div>
+
+        <!-- TAB 6: ADMIN REQUESTS -->
+        <div id="requests" class="tab">
+            <div class="page-header">
+                <div>
+                    <h1>Book Requests</h1>
+                    <p>Approve or reject borrow requests submitted by students.</p>
+                </div>
+            </div>
+            <div id="requestList" class="grid-container"></div>
+        </div>
+
+        <!-- TAB 5: USER PORTAL -->
+        <div id="user" class="tab">
+            
+            <!-- LOGIN SCREEN -->
+            <div id="userLogin" style="display: block; max-width: 400px; margin: 50px auto; text-align: center;">
+                <div class="page-header" style="justify-content: center;">
+                    <div>
+                        <h1>Student Login</h1>
+                        <p>Enter your registered email to access your portal.</p>
+                    </div>
+                </div>
+                <div class="form-card">
+                    <input type="email" id="loginEmail" placeholder="Enter your email..." style="margin-bottom: 16px;">
+                    <button class="btn-primary" onclick="loginUser()" style="width: 100%;">Login</button>
+                </div>
+            </div>
+
+            <!-- LOGGED IN PORTAL -->
+            <div id="userPortal" style="display: none;">
+                <div class="page-header">
+                    <div>
+                        <h1 id="welcomeText">Welcome, Student</h1>
+                        <p>Browse the catalog, use AI search, and request books.</p>
+                    </div>
+                    <button class="btn-sm btn-delete" onclick="logoutUser()" style="width: auto; flex: none; padding: 10px 20px;">Logout</button>
+                </div>
+
+                <!-- Search & AI Bar -->
+                <div class="form-card">
+                    <div class="ai-search-bar">
+                        <input type="text" id="userSearch" placeholder="Search by title or author..." onkeyup="filterUserBooks()">
+                        <input type="text" id="aiSearchQuery" placeholder="Or ask AI: 'I want to learn Python'">
+                        <button class="btn-primary" onclick="aiSearch()" style="white-space: nowrap;">✨ AI Search</button>
+                    </div>
+                </div>
+
+                <h1 style="margin-top: 30px; margin-bottom: 20px; font-size: 1.4rem; font-weight: 800;">📚 Available Books</h1>
+                <div id="userBookList" class="grid-container"></div>
+
+                <h1 style="margin-top: 50px; margin-bottom: 20px; font-size: 1.4rem; font-weight: 800;">📋 My Requests</h1>
+                <div id="userRequestList" class="grid-container"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let currentUserId = null; // Holds the logged-in user's ID
+
+        // --- ROLE SWITCHING ---
+        async function switchRole(role) {
+            const adminNav = document.getElementById('admin-nav');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            if (role === 'admin') {
+                adminNav.style.display = 'flex';
+                document.querySelector('.nav-btn').click(); 
+            } else {
+                adminNav.style.display = 'none';
+                document.getElementById('user').classList.add('active');
+                
+                // Check if user is already logged in
+                if (currentUserId) {
+                    document.getElementById('userLogin').style.display = 'none';
+                    document.getElementById('userPortal').style.display = 'block';
+                    await loadUserBooks(); 
+                    await loadUserRequests(); 
+                } else {
+                    document.getElementById('userLogin').style.display = 'block';
+                    document.getElementById('userPortal').style.display = 'none';
+                }
+            }
+        }
+
+        // --- TAB SWITCHING (ADMIN) ---
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
+            
+            if (tabId === 'dashboard') loadDashboard();
+            if (tabId === 'books') loadBooks();
+            if (tabId === 'members') loadMembers();
+            if (tabId === 'issues') loadIssueDropdowns();
+            if (tabId === 'requests') loadAdminRequests();
+        }
+
+        // --- 1. DASHBOARD ---
+        async function loadDashboard() {
+            try {
+                const [booksRes, membersRes, issuesRes] = await Promise.all([
+                    fetch(`${API_BASE}/books`),
+                    fetch(`${API_BASE}/members`),
+                    fetch(`${API_BASE}/borrow/active`)
+                ]);
+                document.getElementById('stat-books').innerText = (await booksRes.json()).length;
+                document.getElementById('stat-members').innerText = (await membersRes.json()).length;
+                document.getElementById('stat-issued').innerText = (await issuesRes.json()).length;
+            } catch (e) { console.error(e); }
+        }
+
+        // --- 2. BOOKS ---
+        async function loadBooks() {
+            const res = await fetch(`${API_BASE}/books`);
+            const books = await res.json();
+            const list = document.getElementById('bookList');
+            list.innerHTML = '';
+            
+            books.forEach(b => {
+                list.innerHTML += `
+                    <div class="card">
+                        <h4>${b.book_name}</h4>
+                        <p>By ${b.author}</p>
+                        <span class="badge ${b.quantity > 0 ? 'badge-available' : 'badge-out'}">
+                            ${b.quantity > 0 ? `In Stock: ${b.quantity}` : 'Out of Stock'}
+                        </span>
+                        <div class="card-actions">
+                            <button class="btn-sm btn-edit" onclick="editBook(${b.book_id}, '${b.book_name}', '${b.author}', ${b.quantity})">Edit</button>
+                            <button class="btn-sm btn-delete" onclick="deleteBook(${b.book_id})">Delete</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('bookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch(`${API_BASE}/books`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    book_name: document.getElementById('bookName').value,
+                    author: document.getElementById('author').value,
+                    quantity: parseInt(document.getElementById('quantity').value)
+                })
+            });
+            document.getElementById('bookForm').reset();
+            loadBooks();
+        });
+
+        async function deleteBook(id) {
+            if (!confirm("Delete this book?")) return;
+            await fetch(`${API_BASE}/books/${id}`, { method: 'DELETE' });
+            loadBooks();
+        }
+
+        async function editBook(id, name, author, qty) {
+            const newName = prompt("Book Title:", name);
+            if (!newName) return;
+            const newAuthor = prompt("Author:", author);
+            if (!newAuthor) return;
+            const newQty = prompt("Quantity:", qty);
+            if (!newQty) return;
+
+            await fetch(`${API_BASE}/books/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_name: newName, author: newAuthor, quantity: parseInt(newQty) })
+            });
+            loadBooks();
+        }
+
+        // --- 3. MEMBERS ---
+        async function loadMembers() {
+            const res = await fetch(`${API_BASE}/members`);
+            const members = await res.json();
+            const list = document.getElementById('memberList');
+            list.innerHTML = '';
+            
+            members.forEach(m => {
+                list.innerHTML += `
+                    <div class="card">
+                        <h4>${m.name}</h4>
+                        <p>✉️ ${m.email}</p>
+                        <p>📞 ${m.phone}</p>
+                        <span class="badge badge-available" style="background:#f3f4f6; color:#374151;">ID: #${m.member_id}</span>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('memberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch(`${API_BASE}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('memberName').value,
+                    email: document.getElementById('memberEmail').value,
+                    phone: document.getElementById('memberPhone').value
+                })
+            });
+            document.getElementById('memberForm').reset();
+            loadMembers();
+        });
+
+        // --- 4. ISSUE & RETURN ---
+        async function loadIssueDropdowns() {
+            const booksRes = await fetch(`${API_BASE}/books`);
+            const books = await booksRes.json();
+            const bookSelect = document.getElementById('issueBookSelect');
+            bookSelect.innerHTML = '<option value="">Select Book...</option>';
+            books.forEach(b => {
+                if (b.quantity > 0) bookSelect.innerHTML += `<option value="${b.book_id}">${b.book_name} (${b.quantity})</option>`;
+            });
+
+            const membersRes = await fetch(`${API_BASE}/members`);
+            const members = await membersRes.json();
+            const memberSelect = document.getElementById('issueMemberSelect');
+            memberSelect.innerHTML = '<option value="">Select Member...</option>';
+            members.forEach(m => {
+                memberSelect.innerHTML += `<option value="${m.member_id}">${m.name}</option>`;
+            });
+
+            loadActiveIssues();
+        }
+
+        async function loadActiveIssues() {
+            const res = await fetch(`${API_BASE}/borrow/active`);
+            const issues = await res.json();
+            const list = document.getElementById('activeIssuesList');
+            list.innerHTML = '';
+            
+            if(issues.length === 0) list.innerHTML = '<p style="color:#6b7280;">No active issues.</p>';
+
+            issues.forEach(i => {
+                list.innerHTML += `
+                    <div class="card" style="border-left: 4px solid var(--primary);">
+                        <h4>${i.book_name}</h4>
+                        <p>Issued to: <strong>${i.member_name}</strong></p>
+                        <p>Due: ${new Date(i.return_date).toLocaleDateString()}</p>
+                        <div class="card-actions">
+                            <button class="btn-sm btn-issue" onclick="returnBook(${i.issue_id})">Mark Returned</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('issueForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const book_id = document.getElementById('issueBookSelect').value;
+            const member_id = document.getElementById('issueMemberSelect').value;
+
+            const res = await fetch(`${API_BASE}/borrow/issue`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id, member_id })
+            });
+
+            if(res.ok) {
+                loadIssueDropdowns();
+            } else { alert("Error issuing book."); }
+        });
+
+        async function returnBook(issue_id) {
+            const res = await fetch(`${API_BASE}/borrow/return/${issue_id}`, { method: 'POST' });
+            if(res.ok) loadIssueDropdowns();
+        }
+
+        // --- 5. ADMIN: REQUESTS ---
+        async function loadAdminRequests() {
+            const res = await fetch(`${API_BASE}/borrow/requests`);
+            const requests = await res.json();
+            const list = document.getElementById('requestList');
+            list.innerHTML = '';
+
+            if (requests.length === 0) {
+                list.innerHTML = '<p style="color:#6b7280;">No pending requests right now.</p>';
+                return;
+            }
+
+            requests.forEach(r => {
+                list.innerHTML += `
+                    <div class="card request-card">
+                        <h4>${r.book_name}</h4>
+                        <p>Requested by: <strong>${r.member_name}</strong></p>
+                        <div class="card-actions">
+                            <button class="btn-sm btn-issue" onclick="handleRequest(${r.request_id}, 'approve', ${r.book_id}, ${r.member_id})">Approve</button>
+                            <button class="btn-sm btn-delete" onclick="handleRequest(${r.request_id}, 'reject')">Reject</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function handleRequest(request_id, action, book_id, member_id) {
+            await fetch(`${API_BASE}/borrow/request/${request_id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, book_id, member_id })
+            });
+            loadAdminRequests();
+        }
+
+        // --- 6. USER PORTAL ---
+        let allUserBooks = [];
+
+        // Login / Logout
+        async function loginUser() {
+            const email = document.getElementById('loginEmail').value;
+            if (!email) return alert("Please enter an email.");
+
+            try {
+                const res = await fetch(`${API_BASE}/members/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error); 
+                    return;
+                }
+
+                const user = await res.json();
+                currentUserId = user.member_id; 
+                
+                document.getElementById('welcomeText').innerText = `Welcome, ${user.name}`;
+                document.getElementById('userLogin').style.display = 'none';
+                document.getElementById('userPortal').style.display = 'block';
+                
+                loadUserBooks(); 
+                loadUserRequests(); 
+
+            } catch (err) {
+                alert("Login failed. Is the server running?");
+            }
+        }
+
+        function logoutUser() {
+            currentUserId = null;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('userLogin').style.display = 'block';
+            document.getElementById('userPortal').style.display = 'none';
+        }
+
+        // Books
+        async function loadUserBooks() {
+            const res = await fetch(`${API_BASE}/books`);
+            allUserBooks = await res.json();
+            renderUserBooks(allUserBooks);
+        }
+
+        function renderUserBooks(books) {
+            const list = document.getElementById('userBookList');
+            list.innerHTML = '';
+            
+            books.forEach(b => {
+                if (b.quantity > 0) {
+                    list.innerHTML += `
+                        <div class="card">
+                            <h4>${b.book_name}</h4>
+                            <p>By ${b.author}</p>
+                            <span class="badge badge-available">Available (${b.quantity})</span>
+                            <div class="card-actions">
+                                <button class="btn-sm btn-edit" onclick="summarizeBook('${b.book_name}', '${b.author}')">✨ AI Summary</button>
+                                <button class="btn-sm btn-primary" onclick="requestBook(${b.book_id})">Request</button>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            if(list.innerHTML === '') {
+                list.innerHTML = '<p style="color:#6b7280;">No books available right now.</p>';
+            }
+        }
+
+        function filterUserBooks() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUserBooks.filter(b => 
+                b.book_name.toLowerCase().includes(query) || 
+                b.author.toLowerCase().includes(query)
+            );
+            renderUserBooks(filtered);
+        }
+
+        // Requests
+        async function requestBook(bookId) {
+            if (!currentUserId) return alert("Please login first.");
+            
+            const res = await fetch(`${API_BASE}/borrow/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, member_id: currentUserId })
+            });
+
+            if (res.ok) {
+                loadUserRequests(); 
+            }
+        }
+
+        async function loadUserRequests() {
+            if (!currentUserId) return;
+
+            const res = await fetch(`${API_BASE}/borrow/my-requests/${currentUserId}`);
+            const requests = await res.json();
+            const list = document.getElementById('userRequestList');
+            list.innerHTML = '';
+
+            if (requests.length === 0) {
+                list.innerHTML = '<p style="color:#6b7280;">You have no active requests.</p>';
+                return;
+            }
+
+            requests.forEach(r => {
+                let badgeClass = r.status === 'approved' ? 'badge-available' : (r.status === 'pending' ? 'badge-pending' : 'badge-out');
+                
+                list.innerHTML += `
+                    <div class="card">
+                        <h4>${r.book_name}</h4>
+                        <p>Requested: ${new Date(r.request_date).toLocaleDateString()}</p>
+                        <span class="badge ${badgeClass}">${r.status.toUpperCase()}</span>
+                    </div>`;
+            });
+        }
+
+        // --- 7. GEMINI AI INTEGRATION ---
+        async function aiSearch() {
+            const query = document.getElementById('aiSearchQuery').value;
+            if (!query) return;
+
+            try {
+                // 1. Send query to Gemini to get keywords
+                const res = await fetch(`${API_BASE}/ai/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                const data = await res.json();
+                
+                // 2. Use the AI keywords to filter the local books array
+                const keywords = data.keywords.toLowerCase().split(' ');
+                const filtered = allUserBooks.filter(b => {
+                    const text = `${b.book_name} ${b.author}`.toLowerCase();
+                    return keywords.some(k => text.includes(k));
+                });
+
+                renderUserBooks(filtered);
+                document.getElementById('aiSearchQuery').value = ''; // clear input
+            } catch (err) {
+                alert("AI Search failed. Check API key.");
+            }
+        }
+
+        async function summarizeBook(title, author) {
+            const loadingAlert = alert(`✨ AI is reading "${title}"... Click OK to wait.`);
+
+            try {
+                const res = await fetch(`${API_BASE}/ai/summarize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, author })
+                });
+                const data = await res.json();
+                
+                alert(`🤖 AI Summary of ${title}:\n\n${data.summary}`);
+            } catch (err) {
+                alert("Failed to generate summary.");
+            }
+        }
+
+        // INITIAL LOAD
+        loadDashboard();
+    </script>
+</body>
+</html>
