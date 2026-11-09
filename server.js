@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 3000; // Use Render's PORT, fallback to 3000 locally
+app.listen(PORT, '0.0.0.0', () => {   // Explicitly bind to 0.0.0.0
+  console.log(`🚀 Server running on port ${PORT}`);
 });
