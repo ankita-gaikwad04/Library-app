@@ -13,7 +13,9 @@ const aiRoutes = require('./routes/ai');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://library-app-a7q5.onrender.com']
+}));
 app.use(express.json());
 app.use(express.static(__dirname));
 
