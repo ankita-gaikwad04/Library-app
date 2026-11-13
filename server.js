@@ -14,7 +14,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://library-app-a7q5.onrender.com','https://libsyss.netlify.app/']
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://library-app-a7q5.onrender.com','https://libsyss.netlify.app']
 }));
 app.use(express.json());
 //app.use(express.static(__dirname));
