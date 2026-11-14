@@ -1,115 +1,148 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../config/db');
-const { pipeline } = require('@huggingface/transformers'); // <-- USING HUGGINGFACE
+import React, { useState } from 'react';
+import { api } from '../api';
 
-let extractor = null;
+export default function StudentPortal() {
+  const [email, setEmail] = useState('');
+  const [user, setUser] = useState(null);
+  const [books, setBooks] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
-// GET all books
-router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM books ORDER BY book_id ASC');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  const API_BASE = 'https://library-app-1-rsp4.onrender.com/api';
 
-// POST a new book
-router.post('/', async (req, res) => {
-  try {
-    const { book_name, author, quantity } = req.body;
-
-    const newBook = await pool.query(
-      `INSERT INTO books (book_name, author, quantity) 
-       VALUES ($1, $2, $3) RETURNING *`,
-      [book_name, author, quantity]
-    );
-
-    res.status(201).json(newBook.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// DELETE a book by ID
-router.delete('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const deleteBook = await pool.query(
-      'DELETE FROM books WHERE book_id = $1 RETURNING *', 
-      [id]
-    );
-
-    if (deleteBook.rows.length === 0) {
-      return res.status(404).json({ error: 'Book not found' });
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/members/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      if (!res.ok) throw new Error("User not found");
+      
+      const userData = await res.json();
+      setUser(userData);
+      
+      const booksData = await api.getBooks();
+      if (Array.isArray(booksData)) {
+        setBooks(booksData);
+        setSearchResults(booksData);
+      }
+      
+    } catch (err) {
+      alert("Login failed. Check your email.");
     }
+  };
 
-    res.json({ message: 'Book deleted successfully' });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// UPDATE a book by ID
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { book_name, author, quantity } = req.body;
-
-    const updateBook = await pool.query(
-      `UPDATE books 
-       SET book_name = $1, author = $2, quantity = $3 
-       WHERE book_id = $4 RETURNING *`,
-      [book_name, author, quantity, id]
-    );
-
-    if (updateBook.rows.length === 0) {
-      return res.status(404).json({ error: 'Book not found' });
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault(); 
+    if (!searchQuery.trim()) {
+      setSearchResults(books); 
+      return;
     }
-
-    res.json({ message: 'Book updated successfully', data: updateBook.rows[0] });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// RAG Search Route
-router.post('/rag-search', async (req, res) => {
-  const { query } = req.body;
-  try {
-    // Load model if not already loaded
-    if (!extractor) {
-      console.log("⏳ Loading AI model...");
-      extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-      console.log("✅ AI Model Loaded");
+    setIsSearching(true);
+    try {
+      const res = await fetch(`${API_BASE}/books/rag-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery })
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setSearchResults(data);
+    } catch (err) {
+      console.error("RAG search failed", err);
+    } finally {
+      setIsSearching(false);
     }
+  };
 
-    // 1. Convert the user's question into a vector
-    const output = await extractor(query, { pooling: 'mean', normalize: true });
-    const queryEmbedding = `[${Array.from(output.data).join(',')}]`;
+  // NEW: Function to handle the book request
+  const handleRequestBook = async (bookId) => {
+    try {
+      const res = await fetch(`${API_BASE}/borrow/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ book_id: bookId, member_id: user.member_id })
+      });
 
-    // 2. Search the database using cosine distance (<=>)
-    const result = await pool.query(
-      `SELECT book_id, book_name, author, description, quantity,
-              (embedding <=> $1) AS distance
-       FROM books
-       WHERE embedding IS NOT NULL
-       ORDER BY distance ASC
-       LIMIT 3`,
-      [queryEmbedding]
+      if (res.ok) {
+        alert("✅ Request sent to librarian! Please wait for approval.");
+      } else {
+        alert("❌ Failed to send request.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error sending request.");
+    }
+  };
+
+  if (!user) {
+    return (
+      <div style={{ maxWidth: '400px', margin: '80px auto', textAlign: 'center' }}>
+        <div className="page-header"><h1>Student Login</h1><p>Enter your email to access the portal.</p></div>
+        <div className="form-card">
+          <input type="email" placeholder="Enter your email..." value={email} onChange={e => setEmail(e.target.value)} />
+          <button className="btn-primary" onClick={handleLogin}>Login</button>
+        </div>
+      </div>
     );
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error("RAG Error:", err);
-    res.status(500).json({ error: 'RAG search failed' });
   }
-});
 
-module.exports = router;
+  return (
+    <div>
+      <div className="page-header">
+        <h1>Welcome, {user.name} 👋</h1>
+        <p>Search the catalog and request books to borrow.</p>
+      </div>
+
+      <form onSubmit={handleSearchSubmit} className="form-card" style={{ display: 'flex', gap: '16px' }}>
+        <input 
+          type="text" 
+          placeholder="Try asking: 'I want to prepare for a coding interview'..." 
+          value={searchQuery} 
+          onChange={e => setSearchQuery(e.target.value)} 
+          style={{ marginBottom: 0 }} 
+        />
+        <button type="submit" className="btn-primary" style={{ width: '150px' }} disabled={isSearching}>
+          {isSearching ? 'Searching...' : 'Search'}
+        </button>
+      </form>
+
+      <div className="grid-container">
+        {searchResults.length > 0 ? (
+          searchResults.map(b => (
+            <div key={b.book_id} className="card">
+              <h4>{b.book_name}</h4>
+              <p>By {b.author}</p>
+              
+              {b.description && (
+                <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '10px', fontStyle: 'italic' }}>
+                  "{b.description}"
+                </p>
+              )}
+              
+              <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px' }}>
+                <span className="badge badge-available">Available ({b.quantity})</span>
+                
+                {/* NEW: Request Button */}
+                <button 
+                  className="btn-primary" 
+                  style={{ width: 'auto', padding: '8px 16px', fontSize: '0.85rem' }}
+                  onClick={() => handleRequestBook(b.book_id)}
+                  disabled={b.quantity <= 0}
+                >
+                  Request
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ color: '#64748b', gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
+            No books found matching "{searchQuery}"
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
