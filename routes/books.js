@@ -78,5 +78,104 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+const { pipeline } = require('@xenova/transformers');
+let extractor = null;
 
+// RAG Search Route
+router.post('/rag-search', async (req, res) => {
+  const { query } = req.body;
+  try {
+    // Load model if not already loaded
+    if (!extractor) {
+      extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    }
+
+    // 1. Convert the user's question into a vector
+    const output = await extractor(query, { pooling: 'mean', normalize: true });
+    const queryEmbedding = `[${Array.from(output.data).join(',')}]`;
+
+    // 2. Search the database using cosine distance (<=>)
+    const result = await pool.query(
+      `SELECT book_id, book_name, author, description, quantity,
+              (embedding <=> $1) AS distance
+       FROM books
+       WHERE embedding IS NOT NULL
+       ORDER BY distance ASC
+       LIMIT 3`,
+      [queryEmbedding]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'RAG search failed' });
+  }
+});
+const { pipeline } = require('@xenova/transformers');
+let extractor = null;
+
+// RAG Search Route
+router.post('/rag-search', async (req, res) => {
+  const { query } = req.body;
+  try {
+    // Load model if not already loaded
+    if (!extractor) {
+      extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    }
+
+    // 1. Convert the user's question into a vector
+    const output = await extractor(query, { pooling: 'mean', normalize: true });
+    const queryEmbedding = `[${Array.from(output.data).join(',')}]`;
+
+    // 2. Search the database using cosine distance (<=>)
+    const result = await pool.query(
+      `SELECT book_id, book_name, author, description, quantity,
+              (embedding <=> $1) AS distance
+       FROM books
+       WHERE embedding IS NOT NULL
+       ORDER BY distance ASC
+       LIMIT 3`,
+      [queryEmbedding]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'RAG search failed' });
+  }
+});
+
+const { pipeline } = require('@xenova/transformers');
+let extractor = null;
+
+// RAG Search Route
+router.post('/rag-search', async (req, res) => {
+  const { query } = req.body;
+  try {
+    // Load model if not already loaded
+    if (!extractor) {
+      extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    }
+
+    // 1. Convert the user's question into a vector
+    const output = await extractor(query, { pooling: 'mean', normalize: true });
+    const queryEmbedding = `[${Array.from(output.data).join(',')}]`;
+
+    // 2. Search the database using cosine distance (<=>)
+    const result = await pool.query(
+      `SELECT book_id, book_name, author, description, quantity,
+              (embedding <=> $1) AS distance
+       FROM books
+       WHERE embedding IS NOT NULL
+       ORDER BY distance ASC
+       LIMIT 3`,
+      [queryEmbedding]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'RAG search failed' });
+  }
+});
 module.exports = router;
