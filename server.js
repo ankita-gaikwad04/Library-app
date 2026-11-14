@@ -8,7 +8,7 @@ const path = require('path');
 const bookRoutes = require('./routes/books');
 const memberRoutes = require('./routes/members'); 
 const borrowRoutes = require('./routes/borrow'); 
-const aiRoutes = require('./routes/ai');
+
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use(express.json());
 app.use('/api/books', bookRoutes);
 app.use('/api/members', memberRoutes);   // <--- ADDED
 app.use('/api/borrow', borrowRoutes); 
-app.use('/api/ai', aiRoutes);   // <--- ADDED
+
 
 // Base route to serve the frontend
 //app.get('/', (req, res) => {
